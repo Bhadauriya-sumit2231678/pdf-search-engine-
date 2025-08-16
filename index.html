@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Free PDF Search Engine</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <header>
+        <h1>📄 Free PDF Search Engine</h1>
+        <p>Find free PDFs from the internet instantly!</p>
+    </header>
+    <main>
+        <form id="searchForm">
+            <input type="text" id="query" placeholder="Enter keywords (e.g. python, machine learning)" required>
+            <button type="submit">
+                <span id="btn-text">Search PDFs</span>
+                <span id="spinner" class="hidden"></span>
+            </button>
+        </form>
+        <div id="error" class="hidden"></div>
+        <ul id="results"></ul>
+    </main>
+    <footer>
+        <p>Made with ❤️ using Flask & SerpAPI. <a href="https://github.com/Bhadauriya-sumit2231678/pdf-search-engine" target="_blank">GitHub</a></p>
+    </footer>
+    <script>
+        const form = document.getElementById('searchForm');
+        const results = document.getElementById('results');
+        const errorDiv = document.getElementById('error');
+        const spinner = document.getElementById('spinner');
+        const btnText = document.getElementById('btn-text');
+
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            errorDiv.classList.add('hidden');
+            results.innerHTML = '';
+            btnText.textContent = 'Searching...';
+            spinner.classList.remove('hidden');
+            spinner.textContent = '⏳';
+
+            const q = document.getElementById('query').value.trim();
+            if (!q) return;
+
+            try {
+                const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const data = await res.json();
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Search PDFs';
+
+                if (data.length === 0) {
+                    errorDiv.textContent = 'No PDFs found. Try different keywords!';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                data.forEach(pdf => {
+                    const li = document.createElement('li');
+                    li.className = 'pdf-card';
+                    li.innerHTML = `
+                        <div class="card-content">
+                            <a href="${pdf.link}" target="_blank" title="Open PDF">${pdf.title}</a>
+                            <span class="pdf-link">${pdf.link}</span>
+                        </div>
+                    `;
+                    results.appendChild(li);
+                });
+            } catch (err) {
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Search PDFs';
+                errorDiv.textContent = 'Error fetching results. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
